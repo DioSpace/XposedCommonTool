@@ -19,6 +19,7 @@ public class Arrow implements IXposedHookLoadPackage {
 
         XposedBridge.log("app包名：" + loadPackageParam.packageName);
 
+        //自己设置的代理地址
         final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.10", 8888));
 
         //OkHttp 强制走代理
@@ -96,7 +97,6 @@ public class Arrow implements IXposedHookLoadPackage {
                         }
                     }
                 });
-
         //绕过代理检测 2 (检测代理两种方法都可能用,绕过代理最好 1 2两种方法都用上)
         XposedHelpers.findAndHookMethod("java.lang.System",// 被Hook函数所在的类(包名+类名)
                 loadPackageParam.classLoader,
