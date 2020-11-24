@@ -20,7 +20,7 @@ public class Arrow implements IXposedHookLoadPackage {
         XposedBridge.log("app包名：" + loadPackageParam.packageName);
 
         //自己设置的代理地址
-        final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.8", 8888));
+        final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.2", 8888));
 
         //OkHttp 强制走代理
         XposedHelpers.findAndHookMethod("okhttp3.OkHttpClient$Builder", // 被Hook函数所在的类(包名+类名)
@@ -71,33 +71,7 @@ public class Arrow implements IXposedHookLoadPackage {
                     }
                 });
 
-        //绕过代理检测 1
-        XposedHelpers.findAndHookMethod("java.util.Properties",// 被Hook函数所在的类(包名+类名)
-                loadPackageParam.classLoader,
-                "getProperty",// 被Hook函数的名称
-                String.class, // 被Hook函数的第一个参数
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param)
-                            throws Throwable {
-                        super.beforeHookedMethod(param);
-                        XposedBridge.log("start ============= java.util.Properties  getProperty ============");
-                        XposedBridge.log("java.util.Properties  proxy : " + param.args[0]);
-                    }
-
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param)
-                            throws Throwable {
-                        // TODO Auto-generated method stub
-                        super.afterHookedMethod(param);
-                        // 修改方法的返回值
-                        if (param.args[0].equals("http.proxyHost") || param.args[0].equals("https.proxyHost")
-                                || param.args[0].equals("http.proxyPort") || param.args[0].equals("https.proxyPort")) {
-                            param.setResult(null);
-                        }
-                    }
-                });
-        //绕过代理检测 2 (检测代理两种方法都可能用,绕过代理最好 1 2两种方法都用上)
+        //绕过代理检测
         XposedHelpers.findAndHookMethod("java.lang.System",// 被Hook函数所在的类(包名+类名)
                 loadPackageParam.classLoader,
                 "getProperty",// 被Hook函数的名称
