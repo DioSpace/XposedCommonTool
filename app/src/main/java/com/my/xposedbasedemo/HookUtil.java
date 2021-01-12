@@ -8,13 +8,17 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import de.robv.android.xposed.XC_MethodHook;
 
 public class HookUtil {
-    public static XC_MethodHook.MethodHookParam hook_param = new XC_MethodHook.MethodHookParam();
+    public static XC_MethodHook.MethodHookParam hook_param = null;// new XC_MethodHook.MethodHookParam();
+    public static Class<?> TargetClass = null;
     public static int num = 0;
     public static boolean first_start = true;
+    public static boolean isOn = false;
+    public static Object retValue = null;
 
     public static String loadFromSDFile(String fname) {
         fname = "/" + fname;
@@ -27,7 +31,7 @@ public class HookUtil {
             FileInputStream fin = new FileInputStream(f);
             fin.read(buff);
             fin.close();
-            result = new String(buff, "UTF-8");
+            result = new String(buff, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
