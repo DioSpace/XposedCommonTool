@@ -17,9 +17,11 @@ public class HookUtil {
     public static Class<?> TargetClass = null;
     public static int num = 0;
     public static boolean first_start = true;
-    public static boolean isOn = false;
-    public static Object retValue = null;
 
+    /*
+     * 读取sd卡中的文件中内容
+     * fname 相对路径下的文件名 如： "Pictures/test.txt"
+     * */
     public static String loadFromSDFile(String fname) {
         fname = "/" + fname;
         String result = null;
@@ -39,7 +41,7 @@ public class HookUtil {
     }
 
     /**
-     * 写入内容到SD卡中的txt文本中
+     * 写入内容到SD卡中的文本
      * content为内容
      */
     public static void writeToSDFile(String content, String fname) {
