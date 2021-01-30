@@ -17,6 +17,7 @@ public class HookUtil {
     public static Class<?> TargetClass = null;
     public static int num = 0;
     public static boolean first_start = true;
+    public static String crtType = "";
 
     /*
      * 读取sd卡中的文件中内容
@@ -27,6 +28,9 @@ public class HookUtil {
         String result = null;
         try {
             File f = new File(Environment.getExternalStorageDirectory().getPath() + fname);
+            if (!f.exists()) {
+                return "";
+            }
 //            System.out.println(f.getAbsoluteFile());
             int length = (int) f.length();
             byte[] buff = new byte[length];

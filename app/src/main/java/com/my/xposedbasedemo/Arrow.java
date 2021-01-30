@@ -1,5 +1,6 @@
 package com.my.xposedbasedemo;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.security.SecureRandom;
@@ -23,6 +24,63 @@ public class Arrow implements IXposedHookLoadPackage {
         if (!loadPackageParam.packageName.equals("com.myself.network")) //com.my.judge_in_proxy
             return;
 
+        /*
+         * 获取KeyStore 加载的证书和密码
+         * */
+        XposedHelpers.findAndHookMethod("java.security.KeyStore",// 被Hook函数所在的类(包名+类名)
+                loadPackageParam.classLoader,
+                "getInstance",// 被Hook函数的名称
+                String.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        super.beforeHookedMethod(param);
+                        XposedBridge.log("=============  getInstance java.security.KeyStore ============");
+                        XposedBridge.log("getInstance param : " + param.args[0]);
+                        HookUtil.crtType = param.args[0].toString();
+                    }
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        // TODO Auto-generated method stub
+                        super.afterHookedMethod(param);
+                    }
+                });
+        XposedHelpers.findAndHookMethod("java.security.KeyStore",// 被Hook函数所在的类(包名+类名)
+                loadPackageParam.classLoader,
+                "load",// 被Hook函数的名称
+                InputStream.class,
+                char[].class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        super.beforeHookedMethod(param);
+                        XposedBridge.log("=============  load java.security.KeyStore ============");
+                        XposedBridge.log("param0 : " + param.args[0]);
+                        XposedBridge.log("param1 : " + param.args[1]);
+                        if (param.args[0] != null) {
+                            String pwd = "null";
+                            if (param.args[1] != null) {
+                                char[] password = (char[]) param.args[1];
+                                pwd = new String(password);
+                                XposedBridge.log("pwd : " + pwd);
+                            }
+                            InputStream inputStream = (InputStream) param.args[0];
+                            param.args[0] = CrtUtil.interceptCrt(inputStream, pwd, HookUtil.crtType);
+                        }
+                    }
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        // TODO Auto-generated method stub
+                        super.afterHookedMethod(param);
+                    }
+                });
+
         // 破解HTTPS证书固定
         XposedHelpers.findAndHookMethod("javax.net.ssl.SSLContext",// 被Hook函数所在的类(包名+类名)
                 loadPackageParam.classLoader,
@@ -35,7 +93,7 @@ public class Arrow implements IXposedHookLoadPackage {
                     protected void beforeHookedMethod(MethodHookParam param)
                             throws Throwable {
                         super.beforeHookedMethod(param);
-                        XposedBridge.log("start ============= javax.net.ssl.SSLContext  init ============");
+                        XposedBridge.log("start =============  init javax.net.ssl.SSLContext ============");
                         // 生成 TrustManagerFactory
                         TrustManager[] trustManagers = new TrustManager[]{new MyTrustManager()};
                         param.args[1] = trustManagers;
@@ -50,7 +108,7 @@ public class Arrow implements IXposedHookLoadPackage {
                 });
 
         //自己设置的代理地址
-        final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.2", 8888));
+        final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.4", 8888));
 
         //OkHttp 强制走代理
 /*        XposedHelpers.findAndHookMethod("okhttp3.OkHttpClient$Builder", // 被Hook函数所在的类(包名+类名)
