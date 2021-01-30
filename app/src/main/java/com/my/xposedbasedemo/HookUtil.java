@@ -24,10 +24,10 @@ public class HookUtil {
      * fname 相对路径下的文件名 如： "Pictures/test.txt"
      * */
     public static String loadFromSDFile(String fname) {
-        fname = "/" + fname;
         String result = null;
         try {
-            File f = new File(Environment.getExternalStorageDirectory().getPath() + fname);
+            String path = Environment.getExternalStorageDirectory().getPath() + File.separator + fname;
+            File f = new File(path);
             if (!f.exists()) {
                 return "";
             }
@@ -49,9 +49,9 @@ public class HookUtil {
      * content为内容
      */
     public static void writeToSDFile(String content, String fname) {
-        fname = "/" + fname;
         try {
-            File f = new File(Environment.getExternalStorageDirectory().getPath() + fname);
+            String path = Environment.getExternalStorageDirectory().getPath() + File.separator + fname;
+            File f = new File(path);
 //            System.out.println(f1.getAbsoluteFile());
             if (!f.exists()) {
                 boolean isOr = f.createNewFile();
@@ -74,9 +74,9 @@ public class HookUtil {
 
     //往尾部追加数据
     public static void write_endingSDFile(String content, String fname) {
-        fname = "/" + fname;
         try {
-            File f = new File(Environment.getExternalStorageDirectory().getPath() + fname);
+            String path = Environment.getExternalStorageDirectory().getPath() + File.separator + fname;
+            File f = new File(path);
             if (!f.exists()) {
                 f.createNewFile();
             }
