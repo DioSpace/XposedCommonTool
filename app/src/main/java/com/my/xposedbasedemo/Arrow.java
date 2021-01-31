@@ -8,7 +8,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -21,12 +23,68 @@ public class Arrow implements IXposedHookLoadPackage {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         // 不是需要 Hook 的包直接返回
-        if (!loadPackageParam.packageName.equals("com.myself.network")) //com.my.judge_in_proxy
+        if (!loadPackageParam.packageName.equals("com.myself.okhttpdemo")) //com.my.judge_in_proxy
             return;
+
+        /*
+         * okhttp3 破解决TLS证书验证(hook 住okhttp添加证书的地方)
+         * */
+        XposedHelpers.findAndHookMethod("okhttp3.OkHttpClient$Builder",// 被Hook函数所在的类(包名+类名)
+                loadPackageParam.classLoader,
+                "sslSocketFactory",// 被Hook函数的名称
+                SSLSocketFactory.class,
+                X509TrustManager.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        super.beforeHookedMethod(param);
+                        XposedBridge.log("===============  sslSocketFactory okhttp3.OkHttpClient$Builder ==============");
+                        // 生成 TrustManagerFactory
+                        MyTrustManager myTrustManager = new MyTrustManager();
+                        param.args[1] = myTrustManager;
+                    }
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        // TODO Auto-generated method stub
+                        super.afterHookedMethod(param);
+                    }
+                });
+
+
+        // 破解HTTPS证书固定(hook SSLContext 初始化 init 函数,第二个参数是信任的服务器证书,改成信任所有证书)
+        XposedHelpers.findAndHookMethod("javax.net.ssl.SSLContext",// 被Hook函数所在的类(包名+类名)
+                loadPackageParam.classLoader,
+                "init",// 被Hook函数的名称
+                KeyManager[].class, // 被Hook函数的第一个参数
+                TrustManager[].class,
+                SecureRandom.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        super.beforeHookedMethod(param);
+                        XposedBridge.log("start =============  init javax.net.ssl.SSLContext ============");
+                        // 生成 TrustManagerFactory
+                        TrustManager[] trustManagers = new TrustManager[]{new MyTrustManager()};
+                        param.args[1] = trustManagers;
+                    }
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        // TODO Auto-generated method stub
+                        super.afterHookedMethod(param);
+                    }
+                });
+
 
         /*
          * 获取KeyStore 加载的证书和密码
          * */
+/*
         XposedHelpers.findAndHookMethod("java.security.KeyStore",// 被Hook函数所在的类(包名+类名)
                 loadPackageParam.classLoader,
                 "getInstance",// 被Hook函数的名称
@@ -80,32 +138,8 @@ public class Arrow implements IXposedHookLoadPackage {
                         super.afterHookedMethod(param);
                     }
                 });
+*/
 
-        // 破解HTTPS证书固定
-        XposedHelpers.findAndHookMethod("javax.net.ssl.SSLContext",// 被Hook函数所在的类(包名+类名)
-                loadPackageParam.classLoader,
-                "init",// 被Hook函数的名称
-                KeyManager[].class, // 被Hook函数的第一个参数
-                TrustManager[].class,
-                SecureRandom.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param)
-                            throws Throwable {
-                        super.beforeHookedMethod(param);
-                        XposedBridge.log("start =============  init javax.net.ssl.SSLContext ============");
-                        // 生成 TrustManagerFactory
-                        TrustManager[] trustManagers = new TrustManager[]{new MyTrustManager()};
-                        param.args[1] = trustManagers;
-                    }
-
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param)
-                            throws Throwable {
-                        // TODO Auto-generated method stub
-                        super.afterHookedMethod(param);
-                    }
-                });
 
         //自己设置的代理地址
         final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.4", 8888));

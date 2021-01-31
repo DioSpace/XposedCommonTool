@@ -14,6 +14,7 @@ import de.robv.android.xposed.XposedBridge;
 public class CrtUtil {
 
     public static InputStream interceptCrt(InputStream in, String pwd, String crtType) {
+        InputStream originSteam = null;
         try {
             if (crtType.equals("PKCS12")) {
                 crtType = "p12";
@@ -21,8 +22,9 @@ public class CrtUtil {
             if (crtType.equals("BKS")) {
                 crtType = "bks";
             }
-            String fname = File.separator + "Pictures" + File.separator + System.currentTimeMillis() + "-" + pwd + "." + crtType;
-            File f = new File(Environment.getExternalStorageDirectory().getPath() + fname);
+            String path = Environment.getExternalStorageDirectory().getPath() + File.separator + "Pictures" + File.separator + System.currentTimeMillis() + "-" + pwd + "." + crtType;
+            XposedBridge.log("path : " + path);
+            File f = new File(path);
             if (!f.exists()) {
                 f.createNewFile();
             }
@@ -42,12 +44,13 @@ public class CrtUtil {
             // 关闭输出流
             fos.close();
 
-            //避免干扰原工程里的文件读入流
-            return new ByteArrayInputStream(baos.toByteArray());
+            originSteam = new ByteArrayInputStream(baos.toByteArray());
         } catch (IOException e) {
             XposedBridge.log(e.getMessage());
-            throw new AssertionError();
+//            throw new AssertionError();
         }
+        //避免干扰原工程里的文件读入流
+        return originSteam;
     }
 
 }
