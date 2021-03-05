@@ -1,5 +1,7 @@
 package com.my.xposedbasedemo;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -23,13 +25,13 @@ public class Arrow implements IXposedHookLoadPackage {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         // 不是需要 Hook 的包直接返回
-        if (!loadPackageParam.packageName.equals("com.myself.okhttpdemo")) //com.my.judge_in_proxy
+        if (!loadPackageParam.packageName.equals("com.dianping.v1")) //com.my.judge_in_proxy   com.dianping.v1   com.myself.okhttpdemo
             return;
 
         /*
          * okhttp3 破解决TLS证书验证(hook 住okhttp添加证书的地方)
          * */
-        XposedHelpers.findAndHookMethod("okhttp3.OkHttpClient$Builder",// 被Hook函数所在的类(包名+类名)
+/*        XposedHelpers.findAndHookMethod("okhttp3.OkHttpClient$Builder",// 被Hook函数所在的类(包名+类名)
                 loadPackageParam.classLoader,
                 "sslSocketFactory",// 被Hook函数的名称
                 SSLSocketFactory.class,
@@ -51,7 +53,7 @@ public class Arrow implements IXposedHookLoadPackage {
                         // TODO Auto-generated method stub
                         super.afterHookedMethod(param);
                     }
-                });
+                });*/
 
 
         // 破解HTTPS证书固定(hook SSLContext 初始化 init 函数,第二个参数是信任的服务器证书,改成信任所有证书)
@@ -84,7 +86,6 @@ public class Arrow implements IXposedHookLoadPackage {
         /*
          * 获取KeyStore 加载的证书和密码
          * */
-/*
         XposedHelpers.findAndHookMethod("java.security.KeyStore",// 被Hook函数所在的类(包名+类名)
                 loadPackageParam.classLoader,
                 "getInstance",// 被Hook函数的名称
@@ -138,7 +139,6 @@ public class Arrow implements IXposedHookLoadPackage {
                         super.afterHookedMethod(param);
                     }
                 });
-*/
 
 
         //自己设置的代理地址
@@ -260,6 +260,56 @@ public class Arrow implements IXposedHookLoadPackage {
                     }
                 });*/
 
+        /*
+         * hook Stream流
+         * hook住流后对原来的流进行操作后,原来的流会受到干扰、会影响程序的正常运行,为了让原程序正常运行就需要将原来的进行复制后再多次读取
+         * */
+        XposedHelpers.findAndHookMethod("com.dianping.dataservice.mapi.impl.DefaultMApiService$MApiFormWrapper", // 被Hook函数所在的类(包名+类名)
+                loadPackageParam.classLoader,
+                "wrappedInputStream",
+                new XC_MethodHook() {
+
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        super.beforeHookedMethod(param);
+
+                    }
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param)
+                            throws Throwable {
+                        super.afterHookedMethod(param);
+                        // 获取方法的返回值
+                        Object ret = param.getResult();
+
+                        //将返回值 转换成流(这里是InputStream)
+                        InputStream input = (InputStream) ret;
+
+                        //将InputStream对象转换成ByteArrayOutputStream
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[1024];
+                        int len;
+                        while ((len = input.read(buffer)) > -1) {
+                            byteArrayOutputStream.write(buffer, 0, len);
+                        }
+                        byteArrayOutputStream.flush();
+                        //将byteArrayOutputStream可转换成多个InputStream对象，达到多次读取InputStream效果
+                        InputStream inputStreamA = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+                        InputStream inputStreamB = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+
+                        int len2 = inputStreamB.available();
+                        byte[] buff = new byte[len2];
+                        inputStreamB.read(buff, 0, len2);
+
+                        // 打印二进制数据 以16进制的形式
+                        String hex_str = BytesHexUtil.byteToHex(buff);
+                        XposedBridge.log("wrappedInputStream ret  --> hex_str:\n" + hex_str);
+
+                        //避免干扰原来的流
+                        param.setResult(inputStreamA);
+                    }
+                });
     }
 
     /*
