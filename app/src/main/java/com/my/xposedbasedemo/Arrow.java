@@ -86,7 +86,7 @@ public class Arrow implements IXposedHookLoadPackage {
         /*
          * 获取KeyStore 加载的证书和密码
          * */
-        XposedHelpers.findAndHookMethod("java.security.KeyStore",// 被Hook函数所在的类(包名+类名)
+/*        XposedHelpers.findAndHookMethod("java.security.KeyStore",// 被Hook函数所在的类(包名+类名)
                 loadPackageParam.classLoader,
                 "getInstance",// 被Hook函数的名称
                 String.class,
@@ -138,7 +138,7 @@ public class Arrow implements IXposedHookLoadPackage {
                         // TODO Auto-generated method stub
                         super.afterHookedMethod(param);
                     }
-                });
+                });*/
 
 
         //自己设置的代理地址
@@ -264,7 +264,7 @@ public class Arrow implements IXposedHookLoadPackage {
          * hook Stream流
          * hook住流后对原来的流进行操作后,原来的流会受到干扰、会影响程序的正常运行,为了让原程序正常运行就需要将原来的进行复制后再多次读取
          * */
-        XposedHelpers.findAndHookMethod("com.dianping.dataservice.mapi.impl.DefaultMApiService$MApiFormWrapper", // 被Hook函数所在的类(包名+类名)
+/*        XposedHelpers.findAndHookMethod("com.dianping.dataservice.mapi.impl.DefaultMApiService$MApiFormWrapper", // 被Hook函数所在的类(包名+类名)
                 loadPackageParam.classLoader,
                 "wrappedInputStream",
                 new XC_MethodHook() {
@@ -309,7 +309,8 @@ public class Arrow implements IXposedHookLoadPackage {
                         //避免干扰原来的流
                         param.setResult(inputStreamA);
                     }
-                });
+                });*/
+
     }
 
     /*
