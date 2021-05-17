@@ -25,7 +25,7 @@ public class Arrow implements IXposedHookLoadPackage {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         // 不是需要 Hook 的包直接返回
-        if (!loadPackageParam.packageName.equals("com.dianping.v1")) //com.my.judge_in_proxy   com.dianping.v1   com.myself.okhttpdemo
+        if (!loadPackageParam.packageName.equals("com.myself.network")) //com.my.judge_in_proxy   com.dianping.v1   com.myself.okhttpdemo
             return;
 
         /*
