@@ -326,6 +326,7 @@ public class Arrow implements IXposedHookLoadPackage {
                     // 调用类里的 静态方法
                     Object ret1 = XposedHelpers.callStaticMethod(HookUtil.TargetClass, "getQdsc", HookUtil.hook_param.args[0], str);
                     // 获取对象 后调用对象里的方法
+//                    Object paramObject = XposedHelpers.newInstance(HookUtil.TargetClass); //根据类实例化一个对象
                     String retStr = (String) XposedHelpers.callMethod(HookUtil.hook_param.thisObject, "getQdsc", HookUtil.hook_param.args[0], HookUtil.hook_param.args[1]);
                     XposedBridge.log("retStr : " + retStr);
                 }
